@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Text-to-Speech Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    label, select, textarea, button { display: block; width: 100%; margin: 1rem 0; }
+    textarea { height: 120px; }
+  </style>
+</head>
+<body>
+  <h1>Cloud Text-to-Speech Demo</h1>
+
+  <label for="language">Language</label>
+  <select id="language">
+    <option value="en-US">English (US)</option>
+    <option value="en-GB">English (UK)</option>
+    <option value="fr-FR">French</option>
+    <option value="sv-SE">Swedish</option>
+  </select>
+
+  <label for="voice">Voice</label>
+  <select id="voice"></select>
+
+  <label for="text">Text</label>
+  <textarea id="text" placeholder="Enter your text here..."></textarea>
+
+  <button onclick="speak()">▶ Start</button>
+  <button onclick="stop()">⏹ Stop</button>
+
+  <script>
+    const languageSelect = document.getElementById('language');
+    const voiceSelect = document.getElementById('voice');
+    const textArea = document.getElementById('text');
+
+    let voices = [];
+
+    // Load available voices and populate the language/voice options
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      populateVoices(languageSelect.value);
+    }
+
+    // Populate voice options based on selected language
+    function populateVoices(language) {
+      voiceSelect.innerHTML = '';  // Reset options
+      const filteredVoices = voices.filter(voice => voice.lang.startsWith(language));
+      
+      // Special case: Check for Swedish "Bengt" and add it manually if available
+      const bengtVoice = voices.find(voice => voice.name.includes('Bengt') && voice.lang === 'sv-SE');
+      if (bengtVoice) {
+        filteredVoices.unshift(bengtVoice); // Ensure "Bengt" appears first in list
+      }
+
+      filteredVoices.forEach(voice => {
+        const option = document.createElement('option');
+        option.value = voice.name;
+        option.textContent = voice.name;
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    // Set up event listeners and actions
+    languageSelect.addEventListener('change', () => {
+      populateVoices(languageSelect.value);
+    });
+
+    function speak() {
+      stop();  // Stop any ongoing speech
+      const utterance = new SpeechSynthesisUtterance(textArea.value);
+      const selectedVoice = voices.find(v => v.name === voiceSelect.value);
+      if (selectedVoice) utterance.voice = selectedVoice;
+      speechSynthesis.speak(utterance);
+    }
+
+    function stop() {
+      speechSynthesis.cancel();
+    }
+
+    // Load voices when the page loads
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    // Initial load of voices
+    loadVoices();
+  </script>
+</body>
+</html>
